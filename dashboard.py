@@ -6,7 +6,7 @@ import seaborn as sns
 # Konfigurasi Halaman
 st.set_page_config(page_title="Bike Sharing Dashboard", layout="wide")
 
-# 1. Fungsi Load Data
+# Fungsi Load Data
 @st.cache_data
 def load_data():
     # Menggunakan main_data.csv yang sudah dibersihkan di notebook
@@ -17,7 +17,7 @@ def load_data():
 # Memanggil data di awal agar variabel 'day_df' tersedia untuk sidebar
 day_df = load_data()
 
-# --- SIDEBAR ---
+# SIDEBAR
 with st.sidebar:
     st.image("https://github.com/dicodingacademy/assets/raw/main/logo.png")
     st.title("Filter Data")
@@ -41,7 +41,7 @@ with st.sidebar:
 main_df = day_df[(day_df['dteday'] >= pd.to_datetime(start_date)) & 
                 (day_df['dteday'] <= pd.to_datetime(end_date))]
 
-# --- HEADER DASHBOARD ---
+# HEADER DASHBOARD
 st.title("Bike Sharing Analysis Dashboard 🚲")
 
 # Menampilkan Metrics (KPI)
@@ -53,9 +53,9 @@ with col2:
 with col3:
     st.metric("Penyewaan Maksimum", value=f"{main_df['cnt'].max():,}")
 
-st.markdown("---") # Pengganti st.divider() untuk kompatibilitas
+st.markdown("---") 
 
-# --- BAGIAN 1: PENGARUH CUACA ---
+#  PENGARUH CUACA 
 st.subheader("1. Pengaruh Kondisi Cuaca terhadap Penyewaan")
 fig1, ax1 = plt.subplots(figsize=(10, 5))
 sns.barplot(
@@ -70,7 +70,7 @@ ax1.set_xlabel("Kondisi Cuaca")
 ax1.set_ylabel("Rata-rata Penyewaan")
 st.pyplot(fig1)
 
-# --- BAGIAN 2: TREN TAHUNAN ---
+#  TREN TAHUNAN 
 st.subheader("2. Tren Pertumbuhan Penyewaan (2011 vs 2012)")
 # Membuat kolom bulan dan tahun untuk plotting
 main_df['month'] = main_df['dteday'].dt.month
@@ -93,7 +93,7 @@ ax2.set_ylabel("Total Penyewaan")
 ax2.legend(title="Tahun")
 st.pyplot(fig2)
 
-# --- BAGIAN 3: ANALISIS LANJUTAN (CLUSTERING) ---
+# ANALISIS LANJUTAN (CLUSTERING)
 st.subheader("3. Analisis Lanjutan: Manual Clustering (Kategori Suhu)")
 
 def temp_clustering(temp):
