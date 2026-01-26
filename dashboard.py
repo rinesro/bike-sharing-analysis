@@ -6,30 +6,14 @@ import seaborn as sns
 # Konfigurasi halaman
 st.set_page_config(page_title="Bike Sharing Dashboard", layout="wide")
 
-# 1. Fungsi Load Data
+# Fungsi Load Data
 @st.cache_data
 def load_data():
-    day_df = pd.read_csv("day.csv")
-    hour_df = pd.read_csv("hour.csv")
-    
-    # Konversi tanggal
-    day_df['dteday'] = pd.to_datetime(day_df['dteday'])
-    hour_df['dteday'] = pd.to_datetime(hour_df['dteday'])
-    
-    # Mapping weathersit untuk kemudahan visualisasi
-    day_df['weather_label'] = day_df['weathersit'].map({
-        1: 'Cerah', 
-        2: 'Berkabut', 
-        3: 'Hujan Ringan', 
-        4: 'Hujan Berat'
-    })
-    
-    # Mapping tahun
-    day_df['year'] = day_df['dteday'].dt.year
-    
-    return day_df, hour_df
+    df = pd.read_csv("main_data.csv")
+    df['dteday'] = pd.to_datetime(df['dteday'])
+    return df
 
-day_df, hour_df = load_data()
+df = load_data()
 
 # --- SIDEBAR ---
 with st.sidebar:
@@ -117,3 +101,4 @@ st.write("Insight: Jam sibuk penyewaan terjadi pada pagi hari (jam 7-8) dan sore
 
 
 st.caption("Copyright © 2024 - Bike Sharing Analysis Project")
+
