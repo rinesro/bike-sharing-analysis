@@ -3,34 +3,43 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# Konfigurasi halaman
+# Konfigurasi Halaman
 st.set_page_config(page_title="Bike Sharing Dashboard", layout="wide")
 
-# Fungsi Load Data
+# 1. Fungsi Load Data
 @st.cache_data
 def load_data():
+    # Menggunakan main_data.csv yang sudah dibersihkan di notebook
     df = pd.read_csv("main_data.csv")
     df['dteday'] = pd.to_datetime(df['dteday'])
     return df
 
-df = load_data()
+# Memanggil data di awal agar variabel 'day_df' tersedia untuk sidebar
+day_df = load_data()
 
 # --- SIDEBAR ---
 with st.sidebar:
     st.image("https://github.com/dicodingacademy/assets/raw/main/logo.png")
     st.title("Filter Data")
     
-    # Filter rentang tanggal
-    start_date, end_date = st.date_input(
-        label='Rentang Waktu',
-        min_value=day_df['dteday'].min(),
-        max_value=day_df['dteday'].max(),
-        value=[day_df['dteday'].min(), day_df['dteday'].max()]
-    )
+    # Filter rentang tanggal berdasarkan data dteday
+    min_date = day_df['dteday'].min()
+    max_date = day_df['dteday'].max()
+    
+    try:
+        start_date, end_date = st.date_input(
+            label='Rentang Waktu',
+            min_value=min_date,
+            max_value=max_date,
+            value=[min_date, max_date]
+        )
+    except ValueError:
+        st.error("Silakan pilih rentang tanggal yang valid.")
+        start_date, end_date = min_date, max_date
 
-# Filter dataframe berdasarkan tanggal
-main_df = day_df[(day_df['dteday'] >= str(start_date)) & 
-                (day_df['dteday'] <= str(end_date))]
+# Filter dataframe utama berdasarkan pilihan tanggal di sidebar
+main_df = day_df[(day_df['dteday'] >= pd.to_datetime(start_date)) & 
+                (day_df['dteday'] <= pd.to_datetime(end_date))]
 
 # --- HEADER DASHBOARD ---
 st.title("Bike Sharing Analysis Dashboard 🚲")
@@ -44,33 +53,49 @@ with col2:
 with col3:
     st.metric("Penyewaan Maksimum", value=f"{main_df['cnt'].max():,}")
 
-st.markdown("---")
+st.markdown("---") # Pengganti st.divider() untuk kompatibilitas
 
-# --- BAGIAN 1: MENJAWAB PERTANYAAN CUACA ---
+# --- BAGIAN 1: PENGARUH CUACA ---
 st.subheader("1. Pengaruh Kondisi Cuaca terhadap Penyewaan")
-fig, ax = plt.subplots(figsize=(10, 5))
-sns.barplot(x='weather_label', y='cnt', data=main_df, palette='viridis', ax=ax, ci=None)
-ax.set_xlabel("Kondisi Cuaca")
-ax.set_ylabel("Rata-rata Penyewaan")
-st.pyplot(fig)
-st.write("Insight: Pengguna cenderung menyewa sepeda jauh lebih banyak saat cuaca Cerah dibandingkan kondisi lainnya.")
+fig1, ax1 = plt.subplots(figsize=(10, 5))
+sns.barplot(
+    x='weathersit', 
+    y='cnt', 
+    data=main_df, 
+    palette='viridis', 
+    ax=ax1, 
+    ci=None
+)
+ax1.set_xlabel("Kondisi Cuaca")
+ax1.set_ylabel("Rata-rata Penyewaan")
+st.pyplot(fig1)
 
-# --- BAGIAN 2: MENJAWAB PERTANYAAN TREN TAHUNAN ---
+# --- BAGIAN 2: TREN TAHUNAN ---
 st.subheader("2. Tren Pertumbuhan Penyewaan (2011 vs 2012)")
-# Menyiapkan data tren bulanan dari data harian
+# Membuat kolom bulan dan tahun untuk plotting
 main_df['month'] = main_df['dteday'].dt.month
-monthly_trend = main_df.groupby(['year', 'month'])['cnt'].sum().reset_index()
+monthly_trend = main_df.groupby(['yr', 'month'])['cnt'].sum().reset_index()
 
 fig2, ax2 = plt.subplots(figsize=(12, 6))
-sns.lineplot(data=monthly_trend, x='month', y='cnt', hue='year', marker='o', palette=['red', 'blue'], ax=ax2)
+sns.lineplot(
+    data=monthly_trend, 
+    x='month', 
+    y='cnt', 
+    hue='yr', 
+    marker='o', 
+    palette=['red', 'blue'], 
+    ax=ax2
+)
 ax2.set_xticks(range(1, 13))
 ax2.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
+ax2.set_xlabel("Bulan")
+ax2.set_ylabel("Total Penyewaan")
+ax2.legend(title="Tahun")
 st.pyplot(fig2)
-st.write("Insight: Terdapat kenaikan signifikan jumlah penyewa di tahun 2012 dibandingkan 2011 pada hampir semua bulan.")
 
-# --- BAGIAN 3: ANALISIS LANJUTAN (MANUAL CLUSTERING) ---
+# --- BAGIAN 3: ANALISIS LANJUTAN (CLUSTERING) ---
 st.subheader("3. Analisis Lanjutan: Manual Clustering (Kategori Suhu)")
-# Menggunakan data day_df untuk clustering suhu
+
 def temp_clustering(temp):
     if temp < 0.3: return 'Dingin'
     elif temp < 0.6: return 'Nyaman'
@@ -79,26 +104,17 @@ def temp_clustering(temp):
 main_df['temp_category'] = main_df['temp'].apply(temp_clustering)
 
 fig3, ax3 = plt.subplots(figsize=(8, 5))
-sns.boxplot(x='temp_category', y='cnt', data=main_df, palette='coolwarm', ax=ax3)
-ax3.set_title("Distribusi Penyewaan Berdasarkan Kategori Suhu")
+sns.barplot(
+    x='temp_category', 
+    y='cnt', 
+    data=main_df, 
+    palette='coolwarm', 
+    ax=ax3, 
+    order=['Dingin', 'Nyaman', 'Panas'],
+    ci=None
+)
+ax3.set_title("Rata-rata Penyewaan Berdasarkan Kategori Suhu")
 st.pyplot(fig3)
-st.write("Insight: Suhu 'Nyaman' memiliki rata-rata penyewaan tertinggi.")
 
-# --- BAGIAN 4: PENGGUNAAN DATA HOUR.CSV ---
-st.subheader("4. Detail Penyewaan Berdasarkan Jam (Insight Tambahan)")
-# Filter data jam berdasarkan tanggal yang dipilih
-hour_filtered = hour_df[(hour_df['dteday'] >= str(start_date)) & 
-                        (hour_df['dteday'] <= str(end_date))]
-hour_trend = hour_filtered.groupby('hr')['cnt'].mean().reset_index()
-
-fig4, ax4 = plt.subplots(figsize=(10, 5))
-sns.lineplot(x='hr', y='cnt', data=hour_trend, marker='o', ax=ax4)
-ax4.set_xticks(range(0, 24))
-ax4.set_xlabel("Jam (0-23)")
-ax4.set_ylabel("Rata-rata Penyewaan")
-st.pyplot(fig4)
-st.write("Insight: Jam sibuk penyewaan terjadi pada pagi hari (jam 7-8) dan sore hari (jam 17-18).")
-
-
+st.markdown("---")
 st.caption("Copyright © 2024 - Bike Sharing Analysis Project")
-
