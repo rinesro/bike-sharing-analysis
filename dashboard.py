@@ -60,7 +60,7 @@ with col2:
 with col3:
     st.metric("Penyewaan Maksimum", value=f"{main_df['cnt'].max():,}")
 
-st.divider()
+st.markdown("---")
 
 # --- BAGIAN 1: MENJAWAB PERTANYAAN CUACA ---
 st.subheader("1. Pengaruh Kondisi Cuaca terhadap Penyewaan")
@@ -114,5 +114,6 @@ ax4.set_xlabel("Jam (0-23)")
 ax4.set_ylabel("Rata-rata Penyewaan")
 st.pyplot(fig4)
 st.write("Insight: Jam sibuk penyewaan terjadi pada pagi hari (jam 7-8) dan sore hari (jam 17-18).")
+
 
 st.caption("Copyright © 2024 - Bike Sharing Analysis Project")
